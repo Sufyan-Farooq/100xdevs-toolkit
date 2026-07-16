@@ -1,0 +1,10 @@
+# Core dependencies for the downloader
+requests>=2.32.0
+
+# Subtitle generation (GPU-accelerated Whisper transcription)
+faster-whisper>=1.0.0
+
+# NVIDIA CUDA libraries (installed via pip for Windows GPU support)
+# These provide cublas64_12.dll, cudnn, and cudart DLLs without a system CUDA install.
+# Only required if you want GPU-accelerated subtitle generation.
+# Install with: pip install nvidia-cublas-cu12 nvidia-cudnn-cu12 nvidia-cuda-runtime-cu12
