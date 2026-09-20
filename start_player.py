@@ -7,6 +7,8 @@ import sys
 import os
 import mimetypes
 
+import json
+
 # Ensure explicit MIME types for video streaming and subtitles
 mimetypes.add_type("text/vtt", ".vtt")
 mimetypes.add_type("video/mp4", ".mp4")
@@ -14,9 +16,12 @@ mimetypes.add_type("video/webm", ".webm")
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("text/html", ".html")
 mimetypes.add_type("text/css", ".css")
+mimetypes.add_type("application/json", ".json")
 
 PORT = 8000
 DIRECTORY = "."
+USER_DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_data.json")
+user_data_lock = threading.Lock()
 
 class ThreadedHTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     daemon_threads = True
@@ -33,6 +38,78 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         # Prevent spamming console with standard requests log
         pass
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
+    def do_GET(self):
+        path_clean = self.path.split('?')[0]
+        if path_clean == "/api/data":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.end_headers()
+
+            with user_data_lock:
+                if os.path.exists(USER_DATA_FILE):
+                    try:
+                        with open(USER_DATA_FILE, "rb") as f:
+                            self.wfile.write(f.read())
+                        return
+                    except Exception:
+                        pass
+                default_data = {
+                    "history": {},
+                    "notes": {},
+                    "bookmarks": {},
+                    "streak": None,
+                    "lastPlayed": None,
+                    "settings": {}
+                }
+                self.wfile.write(json.dumps(default_data, indent=2).encode("utf-8"))
+            return
+
+        super().do_GET()
+
+    def do_POST(self):
+        path_clean = self.path.split('?')[0]
+        if path_clean == "/api/data":
+            try:
+                content_len = int(self.headers.get('Content-Length', 0))
+                post_body = self.rfile.read(content_len)
+                payload = json.loads(post_body.decode('utf-8'))
+
+                with user_data_lock:
+                    tmp_file = USER_DATA_FILE + ".tmp"
+                    with open(tmp_file, "w", encoding="utf-8") as f:
+                        json.dump(payload, f, indent=2, ensure_ascii=False)
+                    if os.path.exists(USER_DATA_FILE):
+                        os.replace(tmp_file, USER_DATA_FILE)
+                    else:
+                        os.rename(tmp_file, USER_DATA_FILE)
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                response = json.dumps({"status": "saved", "timestamp": time.time()})
+                self.wfile.write(response.encode("utf-8"))
+                return
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                response = json.dumps({"error": str(e)})
+                self.wfile.write(response.encode("utf-8"))
+                return
+
+        self.send_error(404, "Endpoint not found")
 
     def send_head(self):
         path = self.translate_path(self.path)

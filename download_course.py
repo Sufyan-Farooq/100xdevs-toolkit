@@ -505,17 +505,119 @@ def export_course_data_js():
     """Generates course_data.js exporting the nested folder hierarchy of all validated videos for the HTML player."""
     db = load_status()
     course_titles = {"15": "Complete Web Development Cohort", "16": "Complete Devops Cohort"}
+    courses_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "courses")
     
     courses_tree = []
     
     for cid in COURSES_TO_DOWNLOAD:
         course_name = course_titles.get(cid, f"Course_{cid}")
-        vids = db.get(cid, {})
+        vids_db = db.get(cid, {})
         
-        # Build list of validated videos
+        # Check if canonical content_tree.json exists in courses/
+        tree_path = None
+        if os.path.exists(courses_dir):
+            for folder in os.listdir(courses_dir):
+                if folder.startswith(f"{cid}_") or folder == str(cid):
+                    cand = os.path.join(courses_dir, folder, "content_tree.json")
+                    if os.path.exists(cand):
+                        tree_path = cand
+                        break
+                        
+        c_dl_dir = os.path.join(DOWNLOADS_DIR, course_name)
+        disk_files = {}
+        if os.path.exists(c_dl_dir):
+            for root, dirs, files in os.walk(c_dl_dir):
+                for f in files:
+                    if f.endswith(('.mp4', '.mkv', '.webm')):
+                        full_p = os.path.join(root, f)
+                        norm = full_p.replace("\\", "/")
+                        idx = norm.find("downloads/")
+                        rel_p = norm[idx:] if idx != -1 else os.path.basename(full_p)
+                        clean_f = os.path.splitext(f)[0].lower()
+                        disk_files[clean_f] = rel_p
+
+        def resolve_video_path(item_id, item_title):
+            # 1. Check in DB by id
+            v_info = vids_db.get(str(item_id))
+            if v_info and v_info.get("status") == "validated" and v_info.get("file_path"):
+                fp = v_info["file_path"]
+                if os.path.exists(fp):
+                    norm = fp.replace("\\", "/")
+                    idx = norm.find("downloads/")
+                    return norm[idx:] if idx != -1 else os.path.basename(fp)
+            # 2. Check in DB by title
+            for vid, v in vids_db.items():
+                if v.get("title") == item_title and v.get("status") == "validated" and v.get("file_path"):
+                    fp = v["file_path"]
+                    if os.path.exists(fp):
+                        norm = fp.replace("\\", "/")
+                        idx = norm.find("downloads/")
+                        return norm[idx:] if idx != -1 else os.path.basename(fp)
+            # 3. Check disk_files index
+            clean_t = sanitize_name(item_title).lower()
+            if clean_t in disk_files:
+                return disk_files[clean_t]
+            for k, v in disk_files.items():
+                if clean_t in k or k in clean_t:
+                    return v
+            alnum_t = ''.join(c for c in item_title if c.isalnum()).lower()
+            for k, v in disk_files.items():
+                if ''.join(c for c in k if c.isalnum()) == alnum_t:
+                    return v
+            return None
+
+        if tree_path:
+            try:
+                with open(tree_path, 'r', encoding='utf-8') as f:
+                    syllabus = json.load(f)
+                    
+                def process_nodes(nodes):
+                    result = []
+                    for n in nodes:
+                        t = n.get('type')
+                        title = n.get('title')
+                        sorting = n.get('sorting', 0)
+                        
+                        if t == 'FOLDER':
+                            sub_children = process_nodes(n.get('children', []))
+                            if sub_children:
+                                result.append({
+                                    "title": title,
+                                    "type": "folder",
+                                    "children": sub_children
+                                })
+                        elif t == 'VIDEO':
+                            rel_p = resolve_video_path(n.get('id'), title)
+                            if rel_p:
+                                result.append({
+                                    "title": title,
+                                    "type": "video",
+                                    "file_path": rel_p,
+                                    "sorting": sorting
+                                })
+                    return result
+
+                course_root = {
+                    "title": course_name,
+                    "type": "course",
+                    "children": process_nodes(syllabus.get('tree', []))
+                }
+                courses_tree.append(course_root)
+                continue
+            except Exception as e:
+                safe_print(f"[JS Export] Error processing syllabus tree for course {cid}: {e}. Falling back to DB.")
+
+        # Fallback to reconstructing from DB with strict file_path deduplication
         validated_vids = []
-        for vid, v_info in vids.items():
+        seen_files = set()
+        for vid, v_info in vids_db.items():
             if v_info.get("status") == "validated":
+                fp = v_info.get("file_path", "")
+                norm_fp = fp.replace("\\", "/").lower() if fp else ""
+                if norm_fp and norm_fp in seen_files:
+                    continue
+                if norm_fp:
+                    seen_files.add(norm_fp)
                 validated_vids.append({
                     "id": vid,
                     "title": v_info.get("title", ""),
@@ -527,33 +629,26 @@ def export_course_data_js():
         if not validated_vids:
             continue
             
-        # Reconstruct folder hierarchy tree
         course_root = {
             "title": course_name,
             "type": "course",
             "children": []
         }
         
-        # Helper to find or create nested folder node
         def get_folder_node(root_list, path_str):
             if not path_str:
                 return root_list
-                
             parts = path_str.split("/")
             current_list = root_list
-            
             for part in parts:
                 part_clean = part.strip()
                 if not part_clean:
                     continue
-                    
-                # Find folder
                 found_folder = None
                 for node in current_list:
                     if node.get("type") == "folder" and node.get("title") == part_clean:
                         found_folder = node
                         break
-                        
                 if not found_folder:
                     found_folder = {
                         "title": part_clean,
@@ -561,26 +656,19 @@ def export_course_data_js():
                         "children": []
                     }
                     current_list.append(found_folder)
-                    
                 current_list = found_folder["children"]
-                
             return current_list
             
         for v in validated_vids:
             target_list = get_folder_node(course_root["children"], v["folder_path"])
-            
-            # Make the file path relative to the workspace for the web player
-            # D:\Downloads\100xdevs\downloads\Complete Devops Cohort\... -> downloads/Complete Devops Cohort/...
             rel_path = ""
             if v["file_path"]:
                 norm_path = v["file_path"].replace("\\", "/")
-                # Extract starting from "downloads/"
                 idx = norm_path.find("downloads/")
                 if idx != -1:
                     rel_path = norm_path[idx:]
                 else:
                     rel_path = os.path.basename(v["file_path"])
-                    
             target_list.append({
                 "title": v["title"],
                 "type": "video",
@@ -588,17 +676,13 @@ def export_course_data_js():
                 "sorting": v["sorting"]
             })
             
-        # Recursive function to sort children
         def sort_children(node_list):
-            # Sort: folders first (alphabetical), then videos (by sorting field, then title)
             def sort_key(node):
                 is_video = 1 if node.get("type") == "video" else 0
                 sorting_val = node.get("sorting", 0)
                 title = node.get("title", "").lower()
                 return (is_video, sorting_val, title)
-                
             node_list.sort(key=sort_key)
-            
             for node in node_list:
                 if node.get("type") == "folder":
                     sort_children(node["children"])

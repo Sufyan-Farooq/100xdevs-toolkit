@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#090a0f">
     <title>100xDevs - Offline Course Player</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -33,6 +37,10 @@
             --sidebar-width: 380px;
             --drawer-width: 360px;
             --header-height: 56px;
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-area-left: env(safe-area-inset-left, 0px);
+            --safe-area-right: env(safe-area-inset-right, 0px);
         }
 
         * {
@@ -42,6 +50,7 @@
             font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
             scrollbar-width: thin;
             scrollbar-color: var(--border-color) transparent;
+            -webkit-tap-highlight-color: transparent;
         }
 
         ::-webkit-scrollbar {
@@ -59,19 +68,23 @@
             background: var(--border-hover);
         }
 
-        body {
+        html, body {
             background-color: var(--bg-primary);
             color: var(--text-main);
             height: 100vh;
+            height: 100dvh;
+            width: 100vw;
             display: flex;
             overflow: hidden;
             user-select: none;
+            touch-action: manipulation;
         }
 
         .app-container {
             display: flex;
             width: 100vw;
             height: 100vh;
+            height: 100dvh;
             position: relative;
             overflow: hidden;
         }
@@ -1789,12 +1802,529 @@
         .hidden {
             display: none !important;
         }
+
+        /* ==========================================================================
+           Mobile Backdrops, Buttons & Responsive Styles
+           ========================================================================== */
+        .sidebar-backdrop, .drawer-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 45;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-backdrop.show, .drawer-backdrop.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .mobile-sidebar-close-btn {
+            display: none;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .mobile-sidebar-close-btn:hover {
+            color: var(--text-main);
+            border-color: var(--accent-color);
+            background-color: rgba(88, 101, 242, 0.2);
+        }
+
+        .mobile-more-container {
+            display: none;
+        }
+
+        /* ==========================================================================
+           Responsive Media Queries (Tablet & Mobile)
+           ========================================================================== */
+        @media (max-width: 900px) {
+            :root {
+                --sidebar-width: 320px;
+                --drawer-width: 340px;
+                --header-height: 52px;
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 85vw;
+                max-width: 340px;
+                min-width: 280px;
+                z-index: 50;
+                transform: translateX(-100%);
+                margin-right: 0 !important;
+                box-shadow: 6px 0 28px rgba(0, 0, 0, 0.8);
+                transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .sidebar-resizer {
+                display: none !important;
+            }
+
+            .mobile-sidebar-close-btn {
+                display: flex;
+            }
+
+            .right-drawer {
+                position: fixed;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: 85vw;
+                max-width: 380px;
+                z-index: 50;
+                transform: translateX(100%);
+                box-shadow: -6px 0 28px rgba(0, 0, 0, 0.8);
+                transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .right-drawer.open {
+                width: 85vw;
+                max-width: 380px;
+                transform: translateX(0);
+            }
+
+            .top-navbar {
+                padding: 0 12px;
+            }
+
+            .breadcrumb-container {
+                max-width: calc(100vw - 220px);
+                font-size: 12.5px;
+            }
+
+            /* Prevent iOS Safari auto-zoom by ensuring minimum 16px font size on inputs */
+            .search-input,
+            .transcript-search-input,
+            .note-textarea,
+            .bookmark-input,
+            input, textarea, select {
+                font-size: 16px !important;
+            }
+
+            .icon-btn, .ctrl-btn {
+                min-width: 36px;
+                min-height: 36px;
+            }
+
+            .video-item {
+                padding: 9px 10px;
+            }
+
+            .folder-header {
+                padding: 10px 12px;
+            }
+        }
+
+        /* Mobile Phones Breakpoint (<= 640px) */
+        @media (max-width: 640px) {
+            :root {
+                --header-height: 48px;
+            }
+
+            .sidebar {
+                width: 90vw;
+                max-width: 320px;
+            }
+
+            .right-drawer {
+                width: 100vw !important;
+                max-width: 100vw !important;
+                border-left: none;
+            }
+
+            .right-drawer.open {
+                width: 100vw !important;
+                max-width: 100vw !important;
+            }
+
+            .top-navbar {
+                padding: 0 8px;
+                gap: 4px;
+            }
+
+            .top-nav-left {
+                gap: 6px;
+                min-width: 0;
+            }
+
+            .top-nav-right {
+                gap: 4px;
+            }
+
+            #cohortBreadcrumb,
+            #cohortBreadcrumb + span {
+                display: none;
+            }
+
+            .breadcrumb-container {
+                max-width: calc(100vw - 180px);
+                font-size: 12px;
+            }
+
+            .study-streak-pill {
+                padding: 3px 7px;
+                font-size: 11px;
+            }
+
+            #todayTimeText {
+                display: none;
+            }
+
+            #shortcutsBtn {
+                display: none;
+            }
+
+            /* Video Controls Row on Mobile Phones */
+            .video-controls-overlay {
+                padding: 6px 10px max(8px, var(--safe-area-bottom));
+                gap: 4px;
+            }
+
+            .scrubber-container {
+                height: 28px;
+            }
+
+            .scrubber-rail {
+                height: 5px;
+            }
+
+            .scrubber-thumb {
+                transform: translate(-50%, -50%) scale(1);
+                width: 12px;
+                height: 12px;
+            }
+
+            .controls-row {
+                gap: 4px;
+            }
+
+            .controls-group-left {
+                gap: 2px;
+                min-width: 0;
+            }
+
+            .controls-group-right {
+                gap: 2px;
+            }
+
+            .volume-slider-wrapper {
+                display: none !important;
+            }
+
+            .time-display {
+                font-size: 10.5px;
+                margin-left: 2px;
+                gap: 3px;
+            }
+
+            .time-remaining {
+                display: none;
+            }
+
+            .ctrl-btn {
+                width: 34px;
+                height: 34px;
+            }
+
+            .ctrl-btn svg {
+                width: 17px;
+                height: 17px;
+            }
+
+            /* Secondary buttons hidden on mobile bar, moved into More menu */
+            .hide-on-mobile {
+                display: none !important;
+            }
+
+            .mobile-more-container {
+                display: block !important;
+            }
+
+            /* Popover Menus on Mobile Phones */
+            .popover-menu {
+                bottom: 44px;
+                right: -4px;
+                max-width: calc(100vw - 20px);
+                min-width: 170px;
+                padding: 6px;
+            }
+
+            .popover-item {
+                padding: 8px 10px;
+                font-size: 12.5px;
+                gap: 8px;
+            }
+
+            /* Toast Notification on Mobile Phones */
+            .toast-notification {
+                top: 10px;
+                max-width: 92vw;
+                padding: 7px 12px;
+                gap: 8px;
+            }
+
+            .toast-text {
+                font-size: 11.5px;
+            }
+
+            .toast-action-btn {
+                padding: 3px 8px;
+                font-size: 10.5px;
+            }
+
+            /* Shortcuts Modal on Mobile Phones */
+            .shortcuts-modal {
+                width: 94vw;
+                max-height: 85vh;
+            }
+
+            .modal-header {
+                padding: 12px 16px;
+            }
+
+            .modal-body {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 12px 16px;
+                max-height: calc(85vh - 60px);
+            }
+
+            /* Autoplay Countdown on Mobile Phones */
+            .autoplay-overlay {
+                bottom: 60px;
+                right: 12px;
+                left: 12px;
+                max-width: unset;
+                padding: 10px 14px;
+            }
+        }
+
+        /* Extra Small Phones (<= 380px) */
+        @media (max-width: 380px) {
+            .breadcrumb-container {
+                max-width: 110px;
+            }
+
+            .study-streak-pill {
+                display: none;
+            }
+        }
+
+        /* Mobile Phones in Landscape Orientation */
+        @media (max-height: 500px) and (orientation: landscape) {
+            :root {
+                --header-height: 40px;
+            }
+
+            .top-navbar {
+                height: var(--header-height);
+                padding: 0 12px;
+            }
+
+            .video-controls-overlay {
+                padding: 4px 16px max(8px, var(--safe-area-bottom));
+            }
+
+            .scrubber-container {
+                height: 20px;
+            }
+
+            .ctrl-btn {
+                width: 32px;
+                height: 32px;
+            }
+        }
+    
+        /* Slides & Resources Styles */
+        .header-slides-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.22), rgba(120, 70, 255, 0.15));
+            color: #9da8ff;
+            border: 1px solid rgba(88, 101, 242, 0.45);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+        .header-slides-pill:hover {
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.4), rgba(120, 70, 255, 0.3));
+            color: #ffffff;
+            border-color: #5865f2;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(88, 101, 242, 0.3);
+        }
+        .item-slides-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            padding: 2px 5px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+        }
+        .item-slides-icon:hover {
+            color: #7983ff;
+            background: rgba(88, 101, 242, 0.15);
+            border-color: rgba(88, 101, 242, 0.3);
+            transform: scale(1.1);
+        }
+        .slides-drawer-container {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            height: 100%;
+        }
+        .slides-hero-card {
+            background: linear-gradient(145deg, #181b2b, #131622);
+            border: 1px solid rgba(88, 101, 242, 0.3);
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .slides-hero-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #f2f3f5;
+            line-height: 1.4;
+        }
+        .slides-hero-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        .slides-primary-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--accent-color);
+            color: #ffffff;
+            padding: 9px 16px;
+            border-radius: 7px;
+            font-size: 12.5px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .slides-primary-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .resources-section-title {
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+        .resource-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 14px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            gap: 10px;
+        }
+        .resource-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-color);
+            transform: translateX(3px);
+        }
+        .resource-card-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+        .resource-card-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: rgba(88, 101, 242, 0.12);
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .resource-card-text {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .resource-card-arrow {
+            color: var(--text-dim);
+            font-size: 13px;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+        .resource-card:hover .resource-card-arrow {
+            color: var(--accent-color);
+            transform: translateX(2px);
+        }
+
     </style>
 </head>
 <body>
 
     <div class="app-container" id="appContainer">
         
+        <!-- Backdrop Overlays for Mobile Drawers -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+        <div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
+
         <!-- Left Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-resizer" id="sidebarResizer"></div>
@@ -1805,7 +2335,10 @@
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 7a2 2 0 0 0-2.45-1.45L11 8.5 3 6.1v12l8 2.4 12-2.5z"/><path d="M11 8.5v12"/></svg>
                         100x<span>Devs</span> Player
                     </div>
-                    <div class="stats-badge" id="courseStatsBadge">0 / 0 Completed</div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="stats-badge" id="courseStatsBadge">0 / 0 Completed</div>
+                        <button class="mobile-sidebar-close-btn" id="mobileSidebarCloseBtn" onclick="closeSidebar()" title="Close Sidebar">✕</button>
+                    </div>
                 </div>
 
                 <!-- Cohort Filter Switcher Tabs -->
@@ -1886,6 +2419,10 @@
                         <span>›</span>
                         <span class="breadcrumb-item breadcrumb-current" id="currentLectureTitle">Select a lecture</span>
                     </div>
+                    <a id="headerSlidesBtn" class="header-slides-pill" href="#" target="_blank" rel="noopener noreferrer" style="display: none;" title="Open lecture slides & notes in new tab">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        <span>Slides & Notes ↗</span>
+                    </a>
                 </div>
 
                 <div class="top-nav-right">
@@ -1999,7 +2536,7 @@
                                     </button>
 
                                     <!-- Previous Video -->
-                                    <button class="ctrl-btn" title="Previous Video (Shift+P)" onclick="playPrevVideo()">
+                                    <button class="ctrl-btn hide-on-mobile" title="Previous Video (Shift+P)" onclick="playPrevVideo()">
                                         <svg viewBox="0 0 24 24" fill="currentColor">
                                             <polygon points="19 20 9 12 19 4 19 20"/>
                                             <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
@@ -2007,7 +2544,7 @@
                                     </button>
 
                                     <!-- Next Video -->
-                                    <button class="ctrl-btn" title="Next Video (Shift+N)" onclick="playNextVideo()">
+                                    <button class="ctrl-btn hide-on-mobile" title="Next Video (Shift+N)" onclick="playNextVideo()">
                                         <svg viewBox="0 0 24 24" fill="currentColor">
                                             <polygon points="5 4 15 12 5 20 5 4"/>
                                             <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
@@ -2045,7 +2582,7 @@
                                 <div class="controls-group-right">
                                     
                                     <!-- Autoplay Next Toggle -->
-                                    <div class="autoplay-toggle" title="Autoplay Next Lecture" onclick="toggleAutoplayPreference()">
+                                    <div class="autoplay-toggle hide-on-mobile" title="Autoplay Next Lecture" onclick="toggleAutoplayPreference()">
                                         <span>Autoplay</span>
                                         <div class="toggle-switch on" id="autoplayToggleSwitch">
                                             <div class="toggle-knob"></div>
@@ -2053,7 +2590,7 @@
                                     </div>
 
                                     <!-- Quick Bookmark (B) -->
-                                    <button class="ctrl-btn" title="Add Bookmark at Current Time (B)" onclick="addQuickBookmark()">
+                                    <button class="ctrl-btn hide-on-mobile" title="Add Bookmark at Current Time (B)" onclick="addQuickBookmark()">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                                         </svg>
@@ -2093,7 +2630,7 @@
                                     </div>
 
                                     <!-- Aspect Ratio / Fit Selector -->
-                                    <div class="popover-menu-container">
+                                    <div class="popover-menu-container hide-on-mobile">
                                         <button class="ctrl-btn" id="fitModeBtn" title="Video Aspect Fit Mode" onclick="toggleFitMenu(event)">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <rect x="3" y="4" width="18" height="16" rx="2"/>
@@ -2109,7 +2646,7 @@
                                     </div>
 
                                     <!-- Sleep Timer -->
-                                    <div class="popover-menu-container">
+                                    <div class="popover-menu-container hide-on-mobile">
                                         <button class="ctrl-btn" id="sleepTimerBtn" title="Sleep Timer" onclick="toggleSleepMenu(event)">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <circle cx="12" cy="12" r="10"/>
@@ -2128,7 +2665,7 @@
                                     </div>
 
                                     <!-- Picture in Picture (PiP) -->
-                                    <button class="ctrl-btn" id="pipBtn" title="Picture in Picture (P)" onclick="togglePictureInPicture()">
+                                    <button class="ctrl-btn hide-on-mobile" id="pipBtn" title="Picture in Picture (P)" onclick="togglePictureInPicture()">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <rect x="2" y="4" width="20" height="16" rx="2"/>
                                             <rect x="12" y="11" width="7" height="6" rx="1" fill="currentColor" fill-opacity="0.3"/>
@@ -2136,12 +2673,58 @@
                                     </button>
 
                                     <!-- Theater Mode -->
-                                    <button class="ctrl-btn" id="theaterBtn" title="Theater Mode (T)" onclick="toggleTheaterMode()">
+                                    <button class="ctrl-btn hide-on-mobile" id="theaterBtn" title="Theater Mode (T)" onclick="toggleTheaterMode()">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <rect x="2" y="5" width="20" height="14" rx="2"/>
                                             <line x1="2" y1="15" x2="22" y2="15"/>
                                         </svg>
                                     </button>
+
+                                    <!-- Mobile More Options Dropdown -->
+                                    <div class="popover-menu-container mobile-more-container" id="moreControlsDropdown">
+                                        <button class="ctrl-btn mobile-more-btn" id="moreControlsBtn" title="More Options" onclick="toggleMoreMenu(event)">
+                                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                                <circle cx="12" cy="5" r="2"/>
+                                                <circle cx="12" cy="12" r="2"/>
+                                                <circle cx="12" cy="19" r="2"/>
+                                            </svg>
+                                        </button>
+                                        <div class="popover-menu mobile-more-menu" id="moreControlsMenu">
+                                            <div class="popover-title">More Controls</div>
+                                            <button class="popover-item" onclick="playPrevVideo(); closeAllPopovers();">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5"/></svg>
+                                                <span>Previous Video</span>
+                                            </button>
+                                            <button class="popover-item" onclick="playNextVideo(); closeAllPopovers();">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5"/></svg>
+                                                <span>Next Video</span>
+                                            </button>
+                                            <button class="popover-item" onclick="addQuickBookmark(); closeAllPopovers();">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                                                <span>Bookmark Timestamp</span>
+                                            </button>
+                                            <button class="popover-item" onclick="toggleAutoplayPreference();">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                                <span>Autoplay: <b id="moreMenuAutoplayStatus">ON</b></span>
+                                            </button>
+                                            <button class="popover-item" onclick="toggleFitMenu(event);">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M10 20V10"/></svg>
+                                                <span>Aspect Fit Mode</span>
+                                            </button>
+                                            <button class="popover-item" onclick="toggleSleepMenu(event);">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                <span>Sleep Timer</span>
+                                            </button>
+                                            <button class="popover-item" onclick="togglePictureInPicture(); closeAllPopovers();">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="11" width="7" height="6" rx="1" fill="currentColor" fill-opacity="0.3"/></svg>
+                                                <span>Picture-in-Picture</span>
+                                            </button>
+                                            <button class="popover-item" onclick="toggleDrawerTab('settings'); closeAllPopovers();">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                                <span>Audio Boost & Settings</span>
+                                            </button>
+                                        </div>
+                                    </div>
 
                                     <!-- Fullscreen -->
                                     <button class="ctrl-btn" id="fullscreenBtn" title="Fullscreen (F)" onclick="toggleFullscreen()">
@@ -2162,6 +2745,7 @@
                             <button class="drawer-tab-btn active" data-tab="notes" onclick="switchDrawerTab('notes')">Notes</button>
                             <button class="drawer-tab-btn" data-tab="transcript" onclick="switchDrawerTab('transcript')">Transcript</button>
                             <button class="drawer-tab-btn" data-tab="bookmarks" onclick="switchDrawerTab('bookmarks')">Bookmarks</button>
+                            <button class="drawer-tab-btn" data-tab="slides" onclick="switchDrawerTab('slides')">Slides</button>
                             <button class="drawer-tab-btn" data-tab="settings" onclick="switchDrawerTab('settings')">Settings</button>
                         </div>
                         <button class="icon-btn" onclick="closeDrawer()">✕</button>
@@ -2209,6 +2793,16 @@
                         <div class="notes-list" id="bookmarksList"></div>
                     </div>
 
+                    
+                    <!-- Slides & Resources Tab Pane -->
+                    <div class="drawer-content-pane" id="drawerPaneSlides">
+                        <div class="slides-drawer-container" id="slidesDrawerContainer">
+                            <div style="color: var(--text-dim); font-size: 12px; text-align: center; padding: 24px;">
+                                Select a lecture to view its slides and resources.
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 4. Settings Pane -->
                     <div class="drawer-content-pane" id="drawerPaneSettings">
                         
@@ -2239,8 +2833,12 @@
 
                         <!-- Data Management -->
                         <div class="settings-card">
-                            <div class="settings-card-title">💾 Storage & Progress</div>
-                            <button class="notes-export-btn" style="text-align: center; padding: 6px;" onclick="exportAllCourseData()">Backup All Notes & History (JSON)</button>
+                            <div class="settings-card-title">💾 Storage & Persistence</div>
+                            <div id="diskSyncStatusRow" style="font-size: 11.5px; color: var(--text-dim); margin-bottom: 10px; display: flex; align-items: center; gap: 7px; background: var(--bg-hover); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <span id="diskSyncDot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-color); flex-shrink: 0;"></span>
+                                <span id="diskSyncText">Auto-synced to <code style="color: var(--accent-color); font-family: monospace;">user_data.json</code></span>
+                            </div>
+                            <button class="notes-export-btn" style="text-align: center; padding: 6px;" onclick="exportAllCourseData()">Export Backup (JSON)</button>
                             <button class="notes-export-btn" style="text-align: center; padding: 6px; color: var(--danger-color);" onclick="resetAllProgress()">Reset Watch Progress</button>
                         </div>
                     </div>
@@ -2373,6 +2971,9 @@
         const drawerPaneTranscript = document.getElementById('drawerPaneTranscript');
         const drawerPaneBookmarks = document.getElementById('drawerPaneBookmarks');
         const drawerPaneSettings = document.getElementById('drawerPaneSettings');
+        const drawerPaneSlides = document.getElementById('drawerPaneSlides');
+        const slidesDrawerContainer = document.getElementById('slidesDrawerContainer');
+        const headerSlidesBtn = document.getElementById('headerSlidesBtn');
         const noteInput = document.getElementById('noteInput');
         const currentNoteTimestamp = document.getElementById('currentNoteTimestamp');
         const notesList = document.getElementById('notesList');
@@ -2418,8 +3019,11 @@
         };
 
         // ==========================================================================
-        // Storage Layer
+        // Storage Layer (Local Disk File `user_data.json` & Browser `localStorage`)
         // ==========================================================================
+        let diskSyncDebounceTimer = null;
+        let isDiskSyncSupported = false;
+
         function getHistoryMap() {
             try { return JSON.parse(localStorage.getItem(StorageKey.HISTORY)) || {}; }
             catch (e) { return {}; }
@@ -2428,6 +3032,7 @@
         function saveHistoryMap(map) {
             try { localStorage.setItem(StorageKey.HISTORY, JSON.stringify(map)); }
             catch (e) {}
+            scheduleDiskSync();
         }
 
         function getSavedVideoProgress(path) {
@@ -2473,6 +3078,7 @@
             const record = { path, title: title || '', time: time || 0, duration: duration || 0, timestamp: Date.now() };
             localStorage.setItem(StorageKey.LAST_PLAYED, JSON.stringify(record));
             localStorage.setItem('last_played_path', path);
+            scheduleDiskSync();
         }
 
         function getAppSettings() {
@@ -2484,32 +3090,194 @@
             const s = getAppSettings();
             s[k] = v;
             localStorage.setItem(StorageKey.SETTINGS, JSON.stringify(s));
+            scheduleDiskSync();
+        }
+
+        function getStreakData() {
+            try {
+                return JSON.parse(localStorage.getItem(StorageKey.STREAK));
+            } catch (e) { return null; }
+        }
+
+        function saveStreakData(data) {
+            try { localStorage.setItem(StorageKey.STREAK, JSON.stringify(data)); }
+            catch (e) {}
+            scheduleDiskSync();
+        }
+
+        function getFullUserDataPayload() {
+            return {
+                history: getHistoryMap(),
+                lastPlayed: getLastPlayedRecord(),
+                notes: getNotesMap(),
+                bookmarks: getBookmarksMap(),
+                streak: getStreakData(),
+                settings: getAppSettings(),
+                updatedAt: new Date().toISOString()
+            };
+        }
+
+        function scheduleDiskSync(immediate = false) {
+            if (diskSyncDebounceTimer) {
+                clearTimeout(diskSyncDebounceTimer);
+                diskSyncDebounceTimer = null;
+            }
+            if (immediate) {
+                performDiskSync();
+            } else {
+                diskSyncDebounceTimer = setTimeout(performDiskSync, 1500);
+            }
+        }
+
+        async function performDiskSync() {
+            try {
+                const payload = getFullUserDataPayload();
+                const res = await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    setDiskSyncStatusUI(true);
+                }
+            } catch (e) {
+                setDiskSyncStatusUI(false);
+            }
+        }
+
+        function setDiskSyncStatusUI(active) {
+            const dot = document.getElementById('diskSyncDot');
+            const text = document.getElementById('diskSyncText');
+            if (dot && text) {
+                if (active) {
+                    dot.style.background = 'var(--accent-color)';
+                    text.innerHTML = 'Auto-synced to <code style="color: var(--accent-color); font-family: monospace;">user_data.json</code>';
+                } else {
+                    dot.style.background = 'var(--text-dim)';
+                    text.innerHTML = 'Offline mode (<code style="color: var(--text-dim); font-family: monospace;">localStorage</code>)';
+                }
+            }
+        }
+
+        async function initUserDataFromDisk() {
+            try {
+                const res = await fetch('/api/data', { cache: 'no-store' });
+                if (!res.ok) throw new Error('API unavailable');
+                const diskData = await res.json();
+                isDiskSyncSupported = true;
+
+                let shouldPushLocalToDisk = false;
+                const localHistory = getHistoryMap();
+                const localNotes = getNotesMap();
+                const localBookmarks = getBookmarksMap();
+                const localSettings = getAppSettings();
+                const localStreak = getStreakData();
+                const localLastPlayed = getLastPlayedRecord();
+
+                // Merge history (disk data prioritized if present)
+                if (diskData.history && Object.keys(diskData.history).length > 0) {
+                    const mergedHistory = Object.assign({}, localHistory, diskData.history);
+                    localStorage.setItem(StorageKey.HISTORY, JSON.stringify(mergedHistory));
+                } else if (Object.keys(localHistory).length > 0) {
+                    shouldPushLocalToDisk = true;
+                }
+
+                // Merge notes
+                if (diskData.notes && Object.keys(diskData.notes).length > 0) {
+                    const mergedNotes = Object.assign({}, localNotes, diskData.notes);
+                    localStorage.setItem(StorageKey.NOTES, JSON.stringify(mergedNotes));
+                } else if (Object.keys(localNotes).length > 0) {
+                    shouldPushLocalToDisk = true;
+                }
+
+                // Merge bookmarks
+                if (diskData.bookmarks && Object.keys(diskData.bookmarks).length > 0) {
+                    const mergedBookmarks = Object.assign({}, localBookmarks, diskData.bookmarks);
+                    localStorage.setItem(StorageKey.BOOKMARKS, JSON.stringify(mergedBookmarks));
+                } else if (Object.keys(localBookmarks).length > 0) {
+                    shouldPushLocalToDisk = true;
+                }
+
+                // Streak
+                if (diskData.streak) {
+                    localStorage.setItem(StorageKey.STREAK, JSON.stringify(diskData.streak));
+                } else if (localStreak) {
+                    shouldPushLocalToDisk = true;
+                }
+
+                // Last played
+                if (diskData.lastPlayed && diskData.lastPlayed.path) {
+                    localStorage.setItem(StorageKey.LAST_PLAYED, JSON.stringify(diskData.lastPlayed));
+                    localStorage.setItem('last_played_path', diskData.lastPlayed.path);
+                } else if (localLastPlayed) {
+                    shouldPushLocalToDisk = true;
+                }
+
+                // Settings
+                if (diskData.settings && Object.keys(diskData.settings).length > 0) {
+                    const mergedSettings = Object.assign({}, localSettings, diskData.settings);
+                    localStorage.setItem(StorageKey.SETTINGS, JSON.stringify(mergedSettings));
+                } else if (Object.keys(localSettings).length > 0) {
+                    shouldPushLocalToDisk = true;
+                }
+
+                if (shouldPushLocalToDisk) {
+                    performDiskSync();
+                }
+
+                // Apply restored settings & state
+                applyRestoredSettings();
+                updateAllProgressVisuals();
+                updateCourseStats();
+                updateContinueWatchingCard();
+                setupStudyStreak();
+                if (!currentVideoPath) {
+                    restoreLastPlayedSession();
+                }
+                setDiskSyncStatusUI(true);
+            } catch (e) {
+                setDiskSyncStatusUI(false);
+            }
+        }
+
+        function isMobileView() {
+            return window.innerWidth <= 900;
+        }
+
+        function applyRestoredSettings() {
+            const settings = getAppSettings();
+            if (settings.speed) setSpeed(parseFloat(settings.speed), false);
+            if (settings.volume !== undefined && typeof videoPlayer !== 'undefined' && videoPlayer) {
+                videoPlayer.volume = parseFloat(settings.volume);
+                if (typeof volumeSlider !== 'undefined' && volumeSlider) volumeSlider.value = videoPlayer.volume;
+            }
+            if (settings.muted !== undefined && typeof videoPlayer !== 'undefined' && videoPlayer) {
+                videoPlayer.muted = !!settings.muted;
+                updateVolumeUI();
+            }
+            if (settings.autoplay !== undefined) {
+                isAutoplayEnabled = !!settings.autoplay;
+                if (typeof autoplayToggleSwitch !== 'undefined' && autoplayToggleSwitch) {
+                    autoplayToggleSwitch.classList.toggle('on', isAutoplayEnabled);
+                }
+                const moreStatus = document.getElementById('moreMenuAutoplayStatus');
+                if (moreStatus) moreStatus.innerText = isAutoplayEnabled ? 'ON' : 'OFF';
+            }
+            if (settings.theaterMode && typeof appContainer !== 'undefined' && appContainer && !isMobileView()) {
+                appContainer.classList.add('theater-mode');
+            }
+            if (settings.sidebarWidth && typeof sidebar !== 'undefined' && sidebar && !isMobileView()) {
+                sidebar.style.width = `${settings.sidebarWidth}px`;
+            }
+            if (settings.fitMode) setFitMode(settings.fitMode, false);
         }
 
         // ==========================================================================
         // App Lifecycle & Startup
         // ==========================================================================
         document.addEventListener('DOMContentLoaded', () => {
-            // Restore Settings
-            const settings = getAppSettings();
-            if (settings.speed) setSpeed(parseFloat(settings.speed), false);
-            if (settings.volume !== undefined) {
-                videoPlayer.volume = parseFloat(settings.volume);
-                volumeSlider.value = videoPlayer.volume;
-            }
-            if (settings.muted !== undefined) {
-                videoPlayer.muted = !!settings.muted;
-                updateVolumeUI();
-            }
-            if (settings.autoplay !== undefined) {
-                isAutoplayEnabled = !!settings.autoplay;
-                autoplayToggleSwitch.classList.toggle('on', isAutoplayEnabled);
-            }
-            if (settings.theaterMode) appContainer.classList.add('theater-mode');
-            if (settings.sidebarWidth) {
-                sidebar.style.width = `${settings.sidebarWidth}px`;
-            }
-            if (settings.fitMode) setFitMode(settings.fitMode, false);
+            // Restore Initial Local Settings immediately
+            applyRestoredSettings();
 
             // Initialize Cohorts & Playlist
             if (typeof courseData !== 'undefined' && courseData.length > 0) {
@@ -2534,6 +3302,20 @@
             setupSearch();
             setupSidebarResize();
             setupStudyStreak();
+
+            // Window resize handler for mobile responsiveness
+            window.addEventListener('resize', () => {
+                if (!isMobileView()) {
+                    const backdrop1 = document.getElementById('sidebarBackdrop');
+                    const backdrop2 = document.getElementById('drawerBackdrop');
+                    if (backdrop1) backdrop1.classList.remove('show');
+                    if (backdrop2) backdrop2.classList.remove('show');
+                    sidebar.classList.remove('mobile-open');
+                }
+            });
+
+            // Initialize two-way synchronization with user_data.json on disk
+            initUserDataFromDisk();
         });
 
         // ==========================================================================
@@ -2619,7 +3401,12 @@
                                     <span class="video-item-title">${escapeHtml(node.title)}</span>
                                 </div>
                                 <div class="item-action-icons">
-                                    <div class="item-status-icon" title="Toggle Completed" onclick="toggleVideoCompleted(event, '${escapeJsString(node.file_path)}')">
+                                    ${node.slides ? `
+                                        <a class="item-slides-icon" title="${escapeHtml(node.slides.title || 'Open Slides')}" href="${escapeHtml(node.slides.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                        </a>
+                                    ` : ''}
+                                    <div class="item-status-icon"  title="Toggle Completed" onclick="toggleVideoCompleted(event, '${escapeJsString(node.file_path)}')">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
                                     </div>
                                 </div>
@@ -2688,6 +3475,91 @@
         // ==========================================================================
         // Video Playback Engine & Resume
         // ==========================================================================
+        
+        function renderSlidesForCurrentVideo(videoNode) {
+            if (!slidesDrawerContainer) return;
+
+            const slides = videoNode ? videoNode.slides : null;
+            if (!slides) {
+                if (headerSlidesBtn) headerSlidesBtn.style.display = 'none';
+                slidesDrawerContainer.innerHTML = `
+                    <div class="slides-hero-card">
+                        <div class="slides-hero-title">Cohort Slides & Hub</div>
+                        <div class="slides-hero-desc">Access all cohort lecture slides, notes, assignments and curriculum archives.</div>
+                        <a href="https://web-dev-cohort.notion.site/COHORT-3-WEB-DEV-SLIDES-3fdd102e713643c9b2e05488cd004aab" target="_blank" rel="noopener noreferrer" class="slides-primary-btn">
+                            <span>Open Web Dev Slides Hub ↗</span>
+                        </a>
+                        <a href="https://common-bar-39a.notion.site/DevOps-Slides-188ce778f821805ea826e10359a2bd0e" target="_blank" rel="noopener noreferrer" class="slides-primary-btn" style="background: #23273e; border: 1px solid var(--border-color);">
+                            <span>Open DevOps Slides Hub ↗</span>
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            if (headerSlidesBtn) {
+                headerSlidesBtn.href = slides.url;
+                headerSlidesBtn.title = `Open ${slides.title || 'Slides'} in new tab`;
+                headerSlidesBtn.style.display = 'inline-flex';
+            }
+
+            let resourcesHtml = '';
+            if (slides.resources && slides.resources.length > 0) {
+                resourcesHtml = `
+                    <div class="resources-section-title">Lecture Resources & Links</div>
+                    ${slides.resources.map(res => {
+                        let iconSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+                        if (res.url.includes('github.com')) {
+                            iconSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>';
+                        } else if (res.url.includes('figma.com')) {
+                            iconSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v7H8.5A3.5 3.5 0 0 1 5 5.5z"/><path d="M12 2h3.5a3.5 3.5 0 1 1 0 7H12V2z"/><path d="M12 12.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 1 1-7 0z"/><path d="M5 19.5A3.5 3.5 0 0 1 8.5 16H12v3.5a3.5 3.5 0 1 1-7 0z"/><path d="M5 12.5A3.5 3.5 0 0 1 8.5 9H12v7H8.5A3.5 3.5 0 0 1 5 12.5z"/></svg>';
+                        } else if (res.url.includes('canva.com') || res.url.includes('.pdf') || res.url.includes('drive.google')) {
+                            iconSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+                        }
+                        return `
+                            <a href="${escapeHtml(res.url)}" target="_blank" rel="noopener noreferrer" class="resource-card">
+                                <div class="resource-card-left">
+                                    <div class="resource-card-icon">${iconSvg}</div>
+                                    <div class="resource-card-text">${escapeHtml(res.name || 'Resource')}</div>
+                                </div>
+                                <span class="resource-card-arrow">↗</span>
+                            </a>
+                        `;
+                    }).join('')}
+                `;
+            }
+
+            slidesDrawerContainer.innerHTML = `
+                <div class="slides-hero-card">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.5px;">Lecture Slides & Deck</div>
+                    <div class="slides-hero-title">${escapeHtml(slides.title || videoNode.title)}</div>
+                    <div class="slides-hero-desc">Interactive slides, code references, assignments, and detailed curriculum walkthrough for this lecture.</div>
+                    <a href="${escapeHtml(slides.url)}" target="_blank" rel="noopener noreferrer" class="slides-primary-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        <span>Open Slides in Notion / Browser ↗</span>
+                    </a>
+                </div>
+                ${resourcesHtml}
+                <div style="margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
+                    <span class="resources-section-title">Global Course Hubs</span>
+                    <a href="https://web-dev-cohort.notion.site/COHORT-3-WEB-DEV-SLIDES-3fdd102e713643c9b2e05488cd004aab" target="_blank" rel="noopener noreferrer" class="resource-card">
+                        <div class="resource-card-left">
+                            <div class="resource-card-icon">💻</div>
+                            <div class="resource-card-text">All Web Dev Slides Hub</div>
+                        </div>
+                        <span class="resource-card-arrow">↗</span>
+                    </a>
+                    <a href="https://common-bar-39a.notion.site/DevOps-Slides-188ce778f821805ea826e10359a2bd0e" target="_blank" rel="noopener noreferrer" class="resource-card">
+                        <div class="resource-card-left">
+                            <div class="resource-card-icon">🛠️</div>
+                            <div class="resource-card-text">All DevOps Slides Hub</div>
+                        </div>
+                        <span class="resource-card-arrow">↗</span>
+                    </a>
+                </div>
+            `;
+        }
+
         function playVideo(videoNode, startFromZero = false) {
             if (!videoNode) return;
 
@@ -2745,9 +3617,13 @@
             loadNotesForCurrentVideo();
             loadBookmarksForCurrentVideo();
             loadTranscriptForCurrentVideo(subtitlePath);
+            renderSlidesForCurrentVideo(videoNode);
             renderTimelineBookmarkPins();
-
             playerContainer.focus();
+
+            if (isMobileView()) {
+                closeSidebar();
+            }
         }
 
         function restoreLastPlayedSession() {
@@ -2914,8 +3790,24 @@
                 }
             });
 
-            window.addEventListener('beforeunload', () => saveCurrentVideoProgress(true));
-            window.addEventListener('pagehide', () => saveCurrentVideoProgress(true));
+            window.addEventListener('beforeunload', () => {
+                saveCurrentVideoProgress(true);
+                if (navigator.sendBeacon) {
+                    try {
+                        const blob = new Blob([JSON.stringify(getFullUserDataPayload())], { type: 'application/json' });
+                        navigator.sendBeacon('/api/data', blob);
+                    } catch (e) {}
+                }
+            });
+            window.addEventListener('pagehide', () => {
+                saveCurrentVideoProgress(true);
+                if (navigator.sendBeacon) {
+                    try {
+                        const blob = new Blob([JSON.stringify(getFullUserDataPayload())], { type: 'application/json' });
+                        navigator.sendBeacon('/api/data', blob);
+                    } catch (e) {}
+                }
+            });
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden) saveCurrentVideoProgress(true);
             });
@@ -2925,9 +3817,16 @@
         // Scrubber Timeline & Bookmarks Pins
         // ==========================================================================
         function setupScrubber() {
+            function getEventClientX(e) {
+                if (e.touches && e.touches.length > 0) return e.touches[0].clientX;
+                if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientX;
+                return e.clientX;
+            }
+
             function seekFromEvent(e) {
                 const rect = scrubberRail.getBoundingClientRect();
-                const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                const clientX = getEventClientX(e);
+                const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                 if (videoPlayer.duration) {
                     videoPlayer.currentTime = pos * videoPlayer.duration;
                     updateScrubber();
@@ -2935,6 +3834,18 @@
                 }
             }
 
+            function updatePreviewFromEvent(e) {
+                if (!videoPlayer.duration) return;
+                const rect = scrubberRail.getBoundingClientRect();
+                const clientX = getEventClientX(e);
+                const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                const previewTime = pos * videoPlayer.duration;
+                scrubberHoverPreview.innerText = formatTime(previewTime);
+                scrubberHoverPreview.style.left = `${pos * 100}%`;
+                scrubberHoverPreview.style.display = 'block';
+            }
+
+            // Mouse event listeners
             scrubberContainer.addEventListener('mousedown', (e) => {
                 isScrubbing = true;
                 scrubberContainer.classList.add('dragging');
@@ -2953,17 +3864,38 @@
                 window.addEventListener('mouseup', onMouseUp);
             });
 
-            scrubberContainer.addEventListener('mousemove', (e) => {
-                if (!videoPlayer.duration) return;
-                const rect = scrubberRail.getBoundingClientRect();
-                const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                const previewTime = pos * videoPlayer.duration;
-                scrubberHoverPreview.innerText = formatTime(previewTime);
-                scrubberHoverPreview.style.left = `${pos * 100}%`;
-                scrubberHoverPreview.style.display = 'block';
+            scrubberContainer.addEventListener('mousemove', updatePreviewFromEvent);
+            scrubberContainer.addEventListener('mouseleave', () => {
+                scrubberHoverPreview.style.display = 'none';
             });
 
-            scrubberContainer.addEventListener('mouseleave', () => {
+            // Touch event listeners for mobile devices
+            scrubberContainer.addEventListener('touchstart', (e) => {
+                isScrubbing = true;
+                scrubberContainer.classList.add('dragging');
+                seekFromEvent(e);
+                updatePreviewFromEvent(e);
+            }, { passive: false });
+
+            scrubberContainer.addEventListener('touchmove', (e) => {
+                if (!isScrubbing) return;
+                if (e.cancelable) e.preventDefault();
+                seekFromEvent(e);
+                updatePreviewFromEvent(e);
+            }, { passive: false });
+
+            scrubberContainer.addEventListener('touchend', (e) => {
+                if (isScrubbing) {
+                    isScrubbing = false;
+                    scrubberContainer.classList.remove('dragging');
+                    scrubberHoverPreview.style.display = 'none';
+                    saveCurrentVideoProgress(true);
+                }
+            });
+
+            scrubberContainer.addEventListener('touchcancel', () => {
+                isScrubbing = false;
+                scrubberContainer.classList.remove('dragging');
                 scrubberHoverPreview.style.display = 'none';
             });
         }
@@ -3131,6 +4063,17 @@
             speedMenu.classList.remove('show');
             fitMenu.classList.remove('show');
             sleepMenu.classList.remove('show');
+            const moreMenu = document.getElementById('moreControlsMenu');
+            if (moreMenu) moreMenu.classList.remove('show');
+        }
+
+        function toggleMoreMenu(e) {
+            if (e) e.stopPropagation();
+            const moreMenu = document.getElementById('moreControlsMenu');
+            if (!moreMenu) return;
+            const isShowing = moreMenu.classList.contains('show');
+            closeAllPopovers();
+            if (!isShowing) moreMenu.classList.add('show');
         }
 
         function toggleMute() {
@@ -3332,14 +4275,49 @@
             }
         });
 
-        playerContainer.addEventListener('click', (e) => {
-            if (e.target.closest('.video-controls-overlay') || e.target.closest('.toast-notification') || e.target.closest('.autoplay-overlay')) return;
-            togglePlay();
-        });
+        let lastPlayerTapTime = 0;
+        let singleTapTimeout = null;
 
-        playerContainer.addEventListener('dblclick', (e) => {
-            if (e.target.closest('.video-controls-overlay')) return;
-            toggleFullscreen();
+        playerContainer.addEventListener('click', (e) => {
+            if (e.target.closest('.video-controls-overlay') || 
+                e.target.closest('.toast-notification') || 
+                e.target.closest('.autoplay-overlay') ||
+                e.target.closest('.popover-menu')) return;
+
+            const now = Date.now();
+            const rect = playerContainer.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const xRatio = rect.width > 0 ? clickX / rect.width : 0.5;
+            const timeSinceLastTap = now - lastPlayerTapTime;
+
+            if (timeSinceLastTap < 320) {
+                // DOUBLE TAP: Left = -10s, Right = +10s, Middle = Fullscreen
+                clearTimeout(singleTapTimeout);
+                singleTapTimeout = null;
+                lastPlayerTapTime = 0;
+
+                if (xRatio < 0.35) {
+                    seekRelative(-10);
+                } else if (xRatio > 0.65) {
+                    seekRelative(10);
+                } else {
+                    toggleFullscreen();
+                }
+            } else {
+                // SINGLE TAP
+                lastPlayerTapTime = now;
+                clearTimeout(singleTapTimeout);
+                singleTapTimeout = setTimeout(() => {
+                    if (controlsOverlay.classList.contains('autohide')) {
+                        showControls();
+                        resetControlsAutoHide();
+                    } else if (isMobileView()) {
+                        controlsOverlay.classList.add('autohide');
+                    } else {
+                        togglePlay();
+                    }
+                }, 260);
+            }
         });
 
         // ==========================================================================
@@ -3485,10 +4463,8 @@
         function setupStudyStreak() {
             const todayStr = new Date().toISOString().slice(0, 10);
             let streakData = { date: todayStr, secondsToday: 0, streakDays: 1, lastActiveDate: todayStr };
-            try {
-                const saved = JSON.parse(localStorage.getItem(StorageKey.STREAK));
-                if (saved) streakData = saved;
-            } catch (e) {}
+            const saved = getStreakData();
+            if (saved) streakData = saved;
 
             if (streakData.date !== todayStr) {
                 const lastDate = new Date(streakData.date);
@@ -3501,17 +4477,22 @@
             }
 
             function updateDisplay() {
-                streakDaysText.innerText = `${streakData.streakDays} Day${streakData.streakDays > 1 ? 's' : ''}`;
+                if (typeof streakDaysText !== 'undefined' && streakDaysText) {
+                    streakDaysText.innerText = `${streakData.streakDays} Day${streakData.streakDays > 1 ? 's' : ''}`;
+                }
                 const mins = Math.floor(streakData.secondsToday / 60);
-                todayTimeText.innerText = `${mins}m today`;
+                if (typeof todayTimeText !== 'undefined' && todayTimeText) {
+                    todayTimeText.innerText = `${mins}m today`;
+                }
             }
             updateDisplay();
 
             // Track active playback
-            setInterval(() => {
-                if (videoPlayer && !videoPlayer.paused) {
+            if (window._streakInterval) clearInterval(window._streakInterval);
+            window._streakInterval = setInterval(() => {
+                if (typeof videoPlayer !== 'undefined' && videoPlayer && !videoPlayer.paused) {
                     streakData.secondsToday += 5;
-                    localStorage.setItem(StorageKey.STREAK, JSON.stringify(streakData));
+                    saveStreakData(streakData);
                     updateDisplay();
                 }
             }, 5000);
@@ -3708,18 +4689,30 @@
         // ==========================================================================
         function toggleDrawerTab(tabName) {
             const isOpen = rightDrawer.classList.contains('open');
-            const currentActiveTab = document.querySelector('.drawer-tab-btn.active').getAttribute('data-tab');
+            const activeTabBtn = document.querySelector('.drawer-tab-btn.active');
+            const currentActiveTab = activeTabBtn ? activeTabBtn.getAttribute('data-tab') : '';
 
             if (isOpen && currentActiveTab === tabName) {
                 closeDrawer();
             } else {
-                rightDrawer.classList.add('open');
-                switchDrawerTab(tabName);
+                openDrawer(tabName);
             }
+        }
+
+        function openDrawer(tabName) {
+            rightDrawer.classList.add('open');
+            if (isMobileView()) {
+                const backdrop = document.getElementById('drawerBackdrop');
+                if (backdrop) backdrop.classList.add('show');
+                closeSidebar();
+            }
+            if (tabName) switchDrawerTab(tabName);
         }
 
         function closeDrawer() {
             rightDrawer.classList.remove('open');
+            const backdrop = document.getElementById('drawerBackdrop');
+            if (backdrop) backdrop.classList.remove('show');
         }
 
         function switchDrawerTab(tabName) {
@@ -3731,7 +4724,9 @@
             if (tabName === 'notes') drawerPaneNotes.classList.add('active');
             else if (tabName === 'transcript') drawerPaneTranscript.classList.add('active');
             else if (tabName === 'bookmarks') drawerPaneBookmarks.classList.add('active');
-            else if (tabName === 'settings') drawerPaneSettings.classList.add('active');
+            else if (tabName === 'slides') {
+                if (drawerPaneSlides) drawerPaneSlides.classList.add('active');
+            } else if (tabName === 'settings') drawerPaneSettings.classList.add('active');
         }
 
         // --- Notes Management ---
@@ -3743,6 +4738,7 @@
         function saveNotesMap(map) {
             try { localStorage.setItem(StorageKey.NOTES, JSON.stringify(map)); }
             catch (e) {}
+            scheduleDiskSync(true);
         }
 
         function loadNotesForCurrentVideo() {
@@ -3860,6 +4856,7 @@
         function saveBookmarksMap(map) {
             try { localStorage.setItem(StorageKey.BOOKMARKS, JSON.stringify(map)); }
             catch (e) {}
+            scheduleDiskSync(true);
         }
 
         function addQuickBookmark() {
@@ -4052,6 +5049,7 @@
                 lastPlayed: getLastPlayedRecord(),
                 notes: getNotesMap(),
                 bookmarks: getBookmarksMap(),
+                streak: getStreakData(),
                 settings: getAppSettings(),
                 exportedAt: new Date().toISOString()
             };
@@ -4069,7 +5067,9 @@
             if (confirm('Are you sure you want to reset all course progress? Your notes and bookmarks will be kept.')) {
                 localStorage.removeItem(StorageKey.HISTORY);
                 localStorage.removeItem(StorageKey.LAST_PLAYED);
+                scheduleDiskSync(true);
                 updateAllProgressVisuals();
+                updateCourseStats();
                 updateContinueWatchingCard();
                 showOSD('Progress Reset');
             }
@@ -4084,7 +5084,32 @@
         }
 
         function toggleSidebar() {
-            sidebar.classList.toggle('collapsed');
+            if (isMobileView()) {
+                if (sidebar.classList.contains('mobile-open')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            } else {
+                sidebar.classList.toggle('collapsed');
+            }
+        }
+
+        function openSidebar() {
+            if (isMobileView()) {
+                sidebar.classList.add('mobile-open');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                if (backdrop) backdrop.classList.add('show');
+                closeDrawer();
+            } else {
+                sidebar.classList.remove('collapsed');
+            }
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('mobile-open');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (backdrop) backdrop.classList.remove('show');
         }
 
         function toggleShortcutsModal(show) {
